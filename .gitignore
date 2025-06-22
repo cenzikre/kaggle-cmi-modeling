@@ -1,0 +1,32 @@
+# Pickle files
+*.pkl
+
+# Environment files
+.env
+
+# Data directory
+# data/
+*.csv
+*.zip
+
+# PyTorch model files
+*.pth
+*.pt
+
+# Log files
+*.log
+
+# Results directory
+# results/
+
+# Checkpoints directory
+checkpoints/
+
+# Python cache files
+*.pyc
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
