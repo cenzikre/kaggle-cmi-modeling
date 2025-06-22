@@ -67,7 +67,12 @@ def train_model_cv(
             model.train()
             train_losses = []
 
-            for batch in train_loader:
+            for batch in train_loader:                
+                cur_batch_size = batch['labels'].size(0)
+                if cur_batch_size <= 1:
+                    logger.debug(f"Skipping batch with size {cur_batch_size}")
+                    continue
+
                 logits, labels = model.run(batch, device)
                 loss = criterion(logits, labels)
 
