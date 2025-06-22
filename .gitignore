@@ -18,6 +18,8 @@
 
 # Results directory
 # results/
+data/raw/
+data/processed/
 
 # Checkpoints directory
 checkpoints/

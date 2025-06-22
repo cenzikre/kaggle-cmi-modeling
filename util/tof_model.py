@@ -15,7 +15,7 @@ class TOF_Model(nn.Module):
         num_lstm_layers=1,
         num_2d_features=16,
         dropout_rate=0.2,
-        pooling_type: Literal['max', 'avg', 'attn'] = 'mean'
+        pooling_type: Literal['max', 'avg', 'attn', 'mlp'] = 'avg'
     ):
         super().__init__()
         self.pooling_type = pooling_type
@@ -37,7 +37,7 @@ class TOF_Model(nn.Module):
 
         self.device_linear = nn.Sequential(
             nn.Linear(num_2d_features * 5, num_2d_features),
-            nn.BatchNorm1d(num_2d_features),
+            nn.LayerNorm(num_2d_features),
             nn.ReLU(),
             nn.Dropout(dropout_rate),
         )
@@ -85,11 +85,14 @@ class TOF_Model(nn.Module):
             attn_weights = attn_weights.unsqueeze(-1)
             return torch.sum(x * attn_weights, dim=2)
         
-        else:
+        elif pooling_type == 'mlp':
             B, T, C, D = x.size()
             x = x.view(B, T, C*D)
             x = self.device_linear(x)
             return x
+        
+        else:
+            raise ValueError(f"Invalid pooling type: {pooling_type}")
 
     def tof_extractor(self, tof, itof, mask, pooling_type: str):
         tof = self.seq_mask_out(tof, mask)
@@ -119,7 +122,7 @@ class TOF_Model(nn.Module):
 
         # Pooling sensor features over time
         summed = x_lstm_masked.sum(dim=1)
-        lengths = mask.sum(dim=1).clamp(min=1e-6)
+        lengths = mask.unsqueeze(-1).sum(dim=1).clamp(min=1e-6)
         x_pooled = summed / lengths # [B, 2H]
         x_pooled = self.lstm_bn(x_pooled)
         x_pooled = self.dropout(x_pooled)
@@ -131,14 +134,14 @@ class TOF_Model(nn.Module):
     def get_data(self, batch):
         device = next(self.parameters()).device
         labels = batch["labels"].to(device)
-        demo = batch["demo"].to(device)
-        seq_1d = batch["seq_1d"].to(device)
-        tof = batch["tof"].to(device)
-        itof = batch["itof"].to(device)
+        demo = batch["demo"].float().to(device)
+        seq_1d = batch["seq_1d"].float().to(device)
+        tof = batch["seq_2d_tof"].float().to(device)
+        itof = batch["seq_2d_itof"].float().to(device)
         mask = batch["mask"].to(device)
         return {"labels": labels, "demo": demo, "seq_1d": seq_1d, "tof": tof, "itof": itof, "mask": mask}
     
-    def run(self, batch):
+    def run(self, batch, device=None):
         data = self.get_data(batch)
         labels = data.pop("labels")
         logits = self.forward(**data)
@@ -155,8 +158,7 @@ class TOF_Model(nn.Module):
         
         with torch.no_grad():
             for batch in pred_loader:
-                data = self.get_data(batch)
-                logits, label = self.run(data)
+                logits, label = self.run(batch)
                 preds.append(logits.argmax(dim=1))
                 labels.append(label)
 
