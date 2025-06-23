@@ -8,8 +8,8 @@ Detect body-focused repetitive behaviors (BFRBs) from wearable sensor data using
 - Preprocessing includes sequence padding, masked inputs for variable sequence lengths, stratified k-fold cross-validation, learning-rate scheduling, and early stopping to handle a limited dataset (~8K labeled samples).
 
 ## Results
-- **44-feature BiLSTM pipeline**: ~98% accuracy on binary classification (BFRB vs. non-BFRB).
-- **Fine-grained gesture detection**: ~40% accuracy across 18 gesture classes.
+- **BFRB vs. non-BFRB**: ~98% accuracy on binary classification.
+- **Fine-grained gesture detection**: ~58% accuracy across 18 gesture classes.
 
 ---
 
@@ -64,9 +64,8 @@ Detect body-focused repetitive behaviors (BFRBs) from wearable sensor data using
 
 ## Future Directions
 
-- Ensembling TOF + IMU features with thermal and other sensor fusion  
-- Experimenting with transformer encoders across time  
-- Data augmentation and semi-supervised learning to boost fine-grained classification  
+- Optimize IMU-only model with attention based on pooling  
+- Experimenting with transformer encoders across time and addition methods to boost fine-grained classification
 
 ---
 
